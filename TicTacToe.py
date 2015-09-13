@@ -1,6 +1,7 @@
-# John Loeber | contact@johnloeber.com | Sep 12 2015 | Python 2.7.9
+# John Loeber | contact@johnloeber.com | Sep 12 2015 | Python 2.7.10
 
 from time import sleep
+from copy import deepcopy
 
 def game_not_over(board):
     """
@@ -39,15 +40,43 @@ def get_move(board):
         print "Please enter a valid coordinate, like '1 1' or '0 2'."
         return get_move(board)
 
+def best_move(board, perspective):
+    # in the dict, the value is the score of that move
+    possible_moves = {k:0 for k in board if board[k]=="   "}
+    for move in possible_moves.keys():
+        # this generates a copy of the board on every call. memory-wasteful since
+        # we're going through a tree.
+        board_copy = deepcopy(board)       
+        board_copy[move] = perspective
+        game_status = game_not_over(board_copy)
+        # score the game
+        if game_status == -1:
+            possible_moves[move] = 10
+        elif game_status == 1:
+            possible_moves[move] = -10
+        elif game_status == 0:
+            possible_moves[move] = 0
+        else:
+            if perspective == " O ":
+                # get the score from the pair
+                possible_moves[move] = best_move(board_copy," X ")[1]
+                # return best move and the score
+            else:
+                possible_moves[move] = best_move(board_copy," O ")[1]
+    if perspective == " O ":
+        best = max(possible_moves, key=possible_moves.get)
+    else:
+        best = min(possible_moves, key=possible_moves.get)
+    return best, possible_moves[best]
+
 def make_move(board):
-    print "Opponent is making a move..."
-    
-    return (1,1)
+    move = best_move(board," O ")[0]
+    return move
 
 def game():
     board = {(x,y): "   " for x in range(3) for y in range(3)}
     print_board(board)
-    mapping = {-1: " lost!", 1: " won!"}
+    mapping = {-1: " lost!", 0: " tied!", 1: " won!"}
 
     while True:
         # a bit of code-recycling going on below. Not too egregious.
@@ -60,10 +89,12 @@ def game():
             break
 
         print_board(board)
+        # create a delay so the user can see the board change
         sleep(1)
 
         game_status = game_not_over(board)
         if game_status == 1000:
+            print "Opponent is making a move..."
             (x,y) = make_move(board)
             board[(x,y)] = " O "
         else:
