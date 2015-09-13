@@ -2,34 +2,29 @@
 
 from time import sleep
 
-# making the board a class provides an easy way to reset the board
-class Board():
-    def __init__(self):
-        self.board = {(x,y): "   " for x in range(3) for y in range(3)}
+def game_not_over(board):
+    """
+    -1: player loses. 0: tie. 1: player wins. 1000: game not over.
+    """
     wins = [[(0,0), (1,0), (2,0)], [(0,1), (1,1), (2,1)], [(0,2), (1,2), (2,2)],
             [(0,0), (0,1), (0,2)], [(1,0), (1,1), (1,2)], [(2,0), (2,1), (2,2)],
             [(0,0), (1,1), (2,2)], [(0,2), (1,1), (2,0)]]
+    for combination in wins:
+        if board[combination[0]] == board[combination[1]] == board[combination[2]] != "   ":
+            mapping = {" X ": 1, " O ": -1}
+            return mapping[board[combination[0]]]
+    if "   " in board.values():
+        return 1000
+    else:
+        return 0
 
-    def gameNotOver(self):
-        """
-        -1: player loses. 0: tie. 1: player wins. 1000: game not over.
-        """
-        for combination in self.wins:
-            if self.board[combination[0]] == self.board[combination[1]] == self.board[combination[2]] != "   ":
-                print self.board[combination[0]], "won!"
-                return False
-        if "   " in self.board.values():
-            return 1000
-        else:
-            return 0
-
-    def printBoard(self):
+def print_board(board):
+    print "---- ----- -----"
+    for y in range(2,-1,-1):
+        print board[(0,y)], "|", board[(1,y)], "|", board[(2,y)]
         print "---- ----- -----"
-        for y in range(2,-1,-1):
-            print self.board[(0,y)], "|", self.board[(1,y)], "|", self.board[(2,y)]
-            print "---- ----- -----"
 
-def getmove(board):
+def get_move(board):
     print "Enter a coordinate."
     coord = raw_input().split()
     try:
@@ -39,34 +34,42 @@ def getmove(board):
             return (x,y)
         else:
             print "That square is occupied!"
-            return getmove(board)
+            return get_move(board)
     except:
         print "Please enter a valid coordinate, like '1 1' or '0 2'."
-        return getmove(board)
+        return get_move(board)
 
-def makemove(board):
+def make_move(board):
     print "Opponent is making a move..."
     
     return (1,1)
 
 def game():
-    global board
-    board = Board()
-    board.printBoard()
+    board = {(x,y): "   " for x in range(3) for y in range(3)}
+    print_board(board)
+    mapping = {-1: " lost!", 1: " won!"}
+
     while True:
-        if board.gameNotOver():
-            (x,y) = getmove(board.board)
-            board.board[(x,y)] = " X "
+        # a bit of code-recycling going on below. Not too egregious.
+        game_status = game_not_over(board)
+        if game_status == 1000:
+            (x,y) = get_move(board)
+            board[(x,y)] = " X "
         else:
+            print "You" + mapping[game_status]
             break
-        board.printBoard()
+
+        print_board(board)
         sleep(1)
-        if board.gameNotOver():
-            (x,y) = makemove(board.board)
-            board.board[(x,y)] = " O "
+
+        game_status = game_not_over(board)
+        if game_status == 1000:
+            (x,y) = make_move(board)
+            board[(x,y)] = " O "
         else:
+            print "You" + mapping[game_status]
             break
-        board.printBoard()
+        print_board(board)
     
     print "New Game? Enter 'y' or 'n'."
     command = raw_input().lower()
